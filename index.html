@@ -1,421 +1,213 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-	<title>Pro Store Online</title>
-    <meta charset="utf-8">
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <link rel="stylesheet" type="text/css" href="../ProyectoTiendita/CSS/estilos.css">
-    <link rel="icon"  href="../ProyectoTiendita/Media/PSO.ico">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@700&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <title></title>
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4" crossorigin="anonymous">
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+          // Variables
+          const baseDeDatos = [
+              {
+                  id: 1,
+                  nombre: 'Patata',
+                  precio: 1,
+                  imagen: 'patata.jpg'
+              },
+              {
+                  id: 2,
+                  nombre: 'Cebolla',
+                  precio: 1.2,
+                  imagen: 'cebolla.jpg'
+              },
+              {
+                  id: 3,
+                  nombre: 'Calabacin',
+                  precio: 2.1,
+                  imagen: 'calabacin.jpg'
+              },
+              {
+                  id: 4,
+                  nombre: 'Fresas',
+                  precio: 0.6,
+                  imagen: 'fresas.jpg'
+              }
+
+          ];
+
+          let carrito = [];
+          const divisa = '$';
+          const DOMitems = document.querySelector('#items');
+          const DOMcarrito = document.querySelector('#carrito');
+          const DOMtotal = document.querySelector('#total');
+          const DOMbotonVaciar = document.querySelector('#boton-vaciar');
+
+          // Funciones
+
+          /**
+          * Dibuja todos los productos a partir de la base de datos. No confundir con el carrito
+          */
+          function renderizarProductos() {
+              baseDeDatos.forEach((info) => {
+                  // Estructura
+                  const miNodo = document.createElement('div');
+                  miNodo.classList.add('card', 'col-sm-4');
+                  // Body
+                  const miNodoCardBody = document.createElement('div');
+                  miNodoCardBody.classList.add('card-body');
+                  // Titulo
+                  const miNodoTitle = document.createElement('h5');
+                  miNodoTitle.classList.add('card-title');
+                  miNodoTitle.textContent = info.nombre;
+                  // Imagen
+                  const miNodoImagen = document.createElement('img');
+                  miNodoImagen.classList.add('img-fluid');
+                  miNodoImagen.setAttribute('src', info.imagen);
+                  // Precio
+                  const miNodoPrecio = document.createElement('p');
+                  miNodoPrecio.classList.add('card-text');
+                  miNodoPrecio.textContent = `${info.precio}${divisa}`;
+                  // Boton 
+                  const miNodoBoton = document.createElement('button');
+                  miNodoBoton.classList.add('btn', 'btn-primary');
+                  miNodoBoton.textContent = '+';
+                  miNodoBoton.setAttribute('marcador', info.id);
+                  miNodoBoton.addEventListener('click', anyadirProductoAlCarrito);
+                  // Insertamos
+                  miNodoCardBody.appendChild(miNodoImagen);
+                  miNodoCardBody.appendChild(miNodoTitle);
+                  miNodoCardBody.appendChild(miNodoPrecio);
+                  miNodoCardBody.appendChild(miNodoBoton);
+                  miNodo.appendChild(miNodoCardBody);
+                  DOMitems.appendChild(miNodo);
+              });
+          }
+
+          /**
+          * Evento para añadir un producto al carrito de la compra
+          */
+          function anyadirProductoAlCarrito(evento) {
+              // Anyadimos el Nodo a nuestro carrito
+              carrito.push(evento.target.getAttribute('marcador'))
+              // Actualizamos el carrito 
+              renderizarCarrito();
+
+          }
+
+          /**
+          * Dibuja todos los productos guardados en el carrito
+          */
+          function renderizarCarrito() {
+              // Vaciamos todo el html
+              DOMcarrito.textContent = '';
+              // Quitamos los duplicados
+              const carritoSinDuplicados = [...new Set(carrito)];
+              // Generamos los Nodos a partir de carrito
+              carritoSinDuplicados.forEach((item) => {
+                  // Obtenemos el item que necesitamos de la variable base de datos
+                  const miItem = baseDeDatos.filter((itemBaseDatos) => {
+                      // ¿Coincide las id? Solo puede existir un caso
+                      return itemBaseDatos.id === parseInt(item);
+                  });
+                  // Cuenta el número de veces que se repite el producto
+                  const numeroUnidadesItem = carrito.reduce((total, itemId) => {
+                      // ¿Coincide las id? Incremento el contador, en caso contrario no mantengo
+                      return itemId === item ? total += 1 : total;
+                  }, 0);
+                  // Creamos el nodo del item del carrito
+                  const miNodo = document.createElement('li');
+                  miNodo.classList.add('list-group-item', 'text-right', 'mx-2');
+                  miNodo.textContent = `${numeroUnidadesItem} x ${miItem[0].nombre} - ${miItem[0].precio}${divisa}`;
+                  // Boton de borrar
+                  const miBoton = document.createElement('button');
+                  miBoton.classList.add('btn', 'btn-danger', 'mx-5');
+                  miBoton.textContent = 'X';
+                  miBoton.style.marginLeft = '1rem';
+                  miBoton.dataset.item = item;
+                  miBoton.addEventListener('click', borrarItemCarrito);
+                  // Mezclamos nodos
+                  miNodo.appendChild(miBoton);
+                  DOMcarrito.appendChild(miNodo);
+              });
+             // Renderizamos el precio total en el HTML
+             DOMtotal.textContent = calcularTotal();
+          }
+
+          /**
+          * Evento para borrar un elemento del carrito
+          */
+          function borrarItemCarrito(evento) {
+              // Obtenemos el producto ID que hay en el boton pulsado
+              const id = evento.target.dataset.item;
+              // Borramos todos los productos
+              carrito = carrito.filter((carritoId) => {
+                  return carritoId !== id;
+              });
+              // volvemos a renderizar
+              renderizarCarrito();
+          }
+
+          /**
+           * Calcula el precio total teniendo en cuenta los productos repetidos
+           */
+          function calcularTotal() {
+              // Recorremos el array del carrito 
+              return carrito.reduce((total, item) => {
+                  // De cada elemento obtenemos su precio
+                  const miItem = baseDeDatos.filter((itemBaseDatos) => {
+                      return itemBaseDatos.id === parseInt(item);
+                  });
+                  // Los sumamos al total
+                  return total + miItem[0].precio;
+              }, 0).toFixed(2);
+          }
+
+          /**
+          * Varia el carrito y vuelve a dibujarlo
+          */
+          function vaciarCarrito() {
+              // Limpiamos los productos guardados
+              carrito = [];
+              // Renderizamos los cambios
+              renderizarCarrito();
+          }
+
+          // Eventos
+          DOMbotonVaciar.addEventListener('click', vaciarCarrito);
+
+          // Inicio
+          renderizarProductos();
+          renderizarCarrito();
+        });
+    </script>
 </head>
-<body bgcolor="#CEF6F5">
-<script>
-
-	 $(document).ready(function(){
-     $("h2").hover(function(){
-     $("h2").css("background-color", "white");
-     },
-     function(){
-     $("h2").css("background-color", "#81F79F");
-    }); 
-    });
-	 //
-     $(document).ready(function(){
-     $("#A").click(function(){
-     $("#1").toggle(500);
-
-    });
-    });
-
-
-    $(document).ready(function(){
-    $("#a").click(function(){
-    $("#info").val("7 huevos - 1$");
-  });
-});
-
+<body>
     
-     //
-
-     $(document).ready(function(){
-     $("#B").click(function(){
-     $("#2").toggle(500);
-
-    });
-    });
-
-     $(document).ready(function(){
-    $("#b").click(function(){
-    $("#info").val("Aceite Vegetal Orisol - 1.60$");
-  });
-});
-
-     $(document).ready(function(){
-     $("#C").click(function(){
-     $("#3").toggle(500);
-
-    });
-    });
-     $(document).ready(function(){
-     $("#c").click(function(){
-     $("#info").val("Bolsa de azúcar blanca de 2 libras - 0.70$");
-  });
-});
-
-     $(document).ready(function(){
-     $("#D").click(function(){
-     $("#4").toggle(500);
-
-    });
-    });
-      $(document).ready(function(){
-      $("#d").click(function(){
-      $("#info").val("Desinfectante Fabuloso 750 ml - 1.50$");
-  });
-});
-
-     $(document).ready(function(){
-     $("#E").click(function(){
-     $("#5").toggle(500);
-
-    });
-    });
-     $(document).ready(function(){
-     $("#e").click(function(){
-     $("#info").val("Mascarilla quirúrgica - 0.75$");
-  });
-});
-
-
-     $(document).ready(function(){
-     $("#F").click(function(){
-     $("#6").toggle(500);
-
-    });
-    });
-     $(document).ready(function(){
-     $("#f").click(function(){
-     $("#info").val("Cartón de leche Salud - 1.75$");
-  });
-});
-
-
-	 $(document).ready(function(){
-     $("#G").click(function(){
-     $("#7").toggle(500);
-
-    });
-    });
-     $(document).ready(function(){
-     $("#g").click(function(){
-     $("#info").val("5 Libras de arroz - 3.25$");
-  });
-});
-
-
-	 $(document).ready(function(){
-     $("#H").click(function(){
-     $("#8").toggle(500);
-
-    });
-    });
-     $(document).ready(function(){
-     $("#h").click(function(){
-     $("#info").val("Gel Antibacterial - 2.00$");
-  });
-});
-
-     $(document).ready(function(){
-     $("#I").click(function(){
-     $("#9").toggle(500);
-
-    });
-    });
-     $(document).ready(function(){
-     $("#i").click(function(){
-     $("#info").val("Bolsa de frijoles - 2.75$");
-  });
-});
-
-     $(document).ready(function(){
-     $("#J").click(function(){
-     $("#10").toggle(500);
-
-    });
-    });
-     $(document).ready(function(){
-     $("#j").click(function(){
-     $("#info").val("Rollo de papel higiénico Rosal - 0.35$");
-  });
-});
-
-     $(document).ready(function(){
-     $("#K").click(function(){
-     $("#11").toggle(500);
-
-    });
-    });
-     $(document).ready(function(){
-     $("#k").click(function(){
-     $("#info").val("Par de Guantes - 1.50$");
-  });
-});
-
-     $(document).ready(function(){
-     $("#L").click(function(){
-     $("#12").toggle(500);
-
-    });
-    });
-     $(document).ready(function(){
-     $("#l").click(function(){
-     $("#info").val("Té de limón - 1.25$");
-  });
-});
-
-
- 	 $(document).ready(function(){
-     $("#M").click(function(){
-     $("#13").toggle(500);
-
-    });
-    });
-     $(document).ready(function(){
-     $("#m").click(function(){
-     $("#info").val("Jabón Antibacterial - 1.25$");
-  });
-});
-
-
-
-
-//Focus and Blur
-    $(document).ready(function(){
-    $("a").focus(function(){
-    $(this).css("background-color", "#1A5B8B");
-  	});
-    $("a").blur(function(){
-    $(this).css("background-color", "#ff7518");
-  	});
-	});
-
-
-
-////Mostrar productos
-
-
-	$(document).ready(function(){
-  	$("#c3").click(function(){
-    $(".product-item").hide(1000);
-  	});
-  	$("#c2").click(function(){
-    $(".product-item").show(1000);
-  });
-});
-
-
-	$(document).ready(function(){
-  	$("#c2").click(function(){
-    $(".product-item_0").hide(1000);
-  	});
-  	$("#c3").click(function(){
-    $(".product-item_0").show(1000);
-  });
-});
-
-
-	$(document).ready(function(){
-  	$("#c1").click(function(){
-    $(".product-item").show(1000);
-  	});
-});
-
-	$(document).ready(function(){
-  	$("#c1").click(function(){
-    $(".product-item_0").show(1000);
-  	});
-});
-
-
-
-
-
-
-	$(function() {
-	$("#add").on("click", function() {
-	var val = $("input").val();
-	if(val !== '') {
-	var elem = $("<li></li>").text(val);
-	$(elem).append("<button class='rem'> X </button>");
-	$("#mylist").append(elem);
-	$("input").val("");
- 	$(".rem").on("click", function() {
-	$(this).parent().remove();
-				});
-			}
-		});
-	});
-
-
-//Calculo
-
-
-
-
-</script>
-
-
-
-
-
-<center>
-	<div class="Store">
-    		<h2 style="background-color: white">
-    					Pro Store Online
-    		</h2>
-
-</center>
-<form name="contact" method="POST" data-netlify="true">
-<div class="elemento_1">
-<h1>Carrito de compras</h1>
-        <input id="info" type="text" placeholder="Productos" name="comida"/>
-        <button id="add">Añadir</button>
-        <input type="submit" class="form-control submit-btn" value="¡Enviar!">
-        <ol id="mylist"></ol>
-</div>
-</form>
-
-
-
-<div class="Tiendita">
-	<div class="category_list">
-		<a id="c1" href="#" class="category_item" category="todo"> Todo </a>
-		<a id="c2" href="#" class="category_item" category="productos_dia"> Productos de primera necesidad</a>
-		<a id="c3" href="#" class="category_item" category="saneamiento"> Productos de sanitización</a>
-		
-
-	</div>
-
-
-	<section class="products-list">
-
-		<div class="product-item" category="productos_dia">
-        <center><img id="aja" src="../ProyectoTiendita/Media/huevos.jpg"></center> 
-        <a href="#">Huevos</a>
-        <button id="A">Descripción y precio</button>
-        <button id="a">Añadir al carrito</button>
-        <p id="1" style="display: none"> Huevos frescos y de calidad <br> Precio: <b id="pr"> 1.00$ </b>los 7 huevos </p> <HR>
-        </div>
-
-        <div class="product-item" category="productos_dia">
-        <center><img src="../ProyectoTiendita/Media/aceite.jpg"></center>
-        <a href="#">Aceite</a>
-        <button id="B">Descripción y precio</button> 
-        <button id="b">Añadir al carrito</button>
-        <p id="2"style="display: none">  Aceite Vegetal Orisol de cocina en presentación botella de 750Ml <br> Precio:<b id="pr">1.60$</b></p> <HR>
-        </div>
-
-        <div class="product-item" category="productos_dia">
-        <center><img src="../ProyectoTiendita/Media/azucar.jpg"></center>
-        <a href="#">Azúcar</a>
-        <button id="C">Descripción y precio</button> 
-        <button id="c">Añadir al carrito</button>
-        <p id="3"style="display: none"> Azúcar Blanca Del Cañal - 2 libras <br> Precio:<b id="pr">0.70$</b></p> <HR>
-        </div>
-
-        <div class="product-item_0" category="saneamiento">
-        <center><img src="../ProyectoTiendita/Media/desinfectante.jpg"></center>
-        <a href="#">Desinfectante</a>
-        <button id="D">Descripción y precio</button> 
-        <button id="d">Añadir al carrito</button>
-        <p id="4"style="display: none"> Desinfectante Fabuloso 750 ml <br> Precio:<b id="pr">1.50$</b></p> <HR>
-    	</div>
-
-    	<div class="product-item_0" category="saneamiento">
-        <center><img src="../ProyectoTiendita/Media/mascarillas.jpg"></center>
-        <a href="#">Mascarilla</a>
-        <button id="E">Descripción y precio</button> 
-        <button id="e">Añadir al carrito</button>
-        <p id="5"style="display: none"> Mascarilla quirúrgica <br> Precio:<b id="pr">0.75$</b></p> <HR>
-        </div>
-
-        <div class="product-item" category="productos_dia">
-        <center><img src="../ProyectoTiendita/Media/leche.jpg"></center>
-        <a href="#">Leche</a>
-        <button id="F">Descripción y precio</button>
-        <button id="f">Añadir al carrito</button>
-        <p id="6" style="display: none"> Cartón de leche Salud <br> Precio:<b id="pr"> 1.75$</b></p> <HR>
-        </div>
-
-        <div class="product-item" category="productos_dia">
-        <center><img src="../ProyectoTiendita/Media/arroz.jpg"></center>
-        <a href="#">Arroz</a>
-        <button id="G">Descripción y precio</button>
-        <button id="g">Añadir al carrito</button>
-        <p id="7" style="display: none"> 5 Libras de arroz precosido San Francisco <br> Precio:<b id="pr"> 3.25$</b></p> <HR>
-        </div>
-
-        <div class="product-item_0" category="productos_dia">
-        <center><img src="../ProyectoTiendita/Media/gel.jpg"></center>
-        <a href="#">Alcohol Gel</a>
-        <button id="H">Descripción y precio</button>
-        <button id="h">Añadir al carrito</button>
-        <p id="8" style="display: none"> Gel Antibacterial <br> Precio:<b id="pr"> 2.00$</b></p> <HR>
-        </div>
-
-        <div class="product-item" category="productos_dia">
-        <center><img src="../ProyectoTiendita/Media/frijol.jpg"></center>
-        <a href="#">Frijoles</a>
-        <button id="I">Descripción y precio</button>
-        <button id="i">Añadir al carrito</button>
-        <p id="9" style="display: none"> Frijoles As de Oro <br> Precio:<b id="pr"> 2.75$</b></p> <HR>
-        </div>
-
-
-        <div class="product-item" category="productos_dia">
-        <center><img src="../ProyectoTiendita/Media/papel.jpg"></center>
-        <a href="#">Papel higiénico</a>
-        <button id="J">Descripción y precio</button>
-        <button id="j">Añadir al carrito</button>
-        <p id="10" style="display: none"> Rollo de papel higiénico <br> Precio:<b id="pr"> 0.35$</b></p> <HR>
-        </div>
-
-        <div class="product-item_0" category="productos_dia">
-        <center><img src="../ProyectoTiendita/Media/guantes.jpg"></center>
-        <a href="#">Guantes</a>
-        <button id="K">Descripción y precio</button>
-        <button id="k">Añadir al carrito</button>
-        <p id="11" style="display: none"> Par de guantes de latex <br> Precio:<b id="pr"> 1.50$</b></p> <HR>
-        </div>
-
-        <div class="product-item" category="productos_dia">
-        <center><img src="../ProyectoTiendita/Media/té.jpg"></center>
-        <a href="#">Té de limón</a>
-        <button id="L">Descripción y precio</button>
-        <button id="l">Añadir al carrito</button>
-        <p id="12" style="display: none"> Té de limón Lipton <br> Precio:<b id="pr"> 1.25$</b></p> <HR>
-        </div>
-
-
-        <div class="product-item_0" category="productos_dia">
-        <center><img src="../ProyectoTiendita/Media/jabón.jpg"></center>
-        <a href="#">Jabón antibacterial</a>
-        <button id="M">Descripción y precio</button>
-        <button id="m">Añadir al carrito</button>
-        <p id="13" style="display: none"> Jabón antibacterial <br> Precio:<b id="pr"> 1.25$</b></p> <HR>
-        </div>
-
- </div>
-
+    <div class="container">
+        <div class="row">
+            <!-- Elementos generados a partir del JSON -->
+            <main id="items" class="col-sm-8 row"></main>
+            <!-- Carrito -->
+            
+            <aside class="col-sm-4">
+                <h2>Carrito</h2>
+                <!-- Elementos del carrito -->
+                <form name="contact" method="POST" data-netlify="true">
+                <input type="text" class="form-control" name="name" placeholder="Escribe tu nombre" id="name">
+                <ul id="carrito" class="list-group"></ul>
+                
+                <hr>
+                <!-- Precio total -->
+                <p class="text-right">Total: <span id="total"></span>&dollar;;</p>
+            
+                <button id="boton-vaciar" class="btn btn-danger">Vaciar</button>
+                <input type="submit" class="form-control submit-btn" value="¡Enviar!">
+            </form>
+            </aside>
         
+        </div>
+    </div>
 
-    </section>
-
-
-
- 
-    
-
-</div>
 </body>
 </html>
